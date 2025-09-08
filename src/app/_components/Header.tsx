@@ -1,12 +1,14 @@
 'use client'
 
+import { useTheme } from 'next-themes'
+import { useEffect, useRef, useState } from 'react'
+import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { ChevronDown, Film, Moon, Search, Sun, X } from 'lucide-react'
 import { Genre } from './Genre'
-import { useTheme } from 'next-themes'
-import { useState } from 'react'
-import Link from 'next/link'
+import { useDebounce } from '@/hooks/useDebounce'
+import { searchMovies } from '@/hooks/GetSearchMovieApi'
+import { SearchDropdown } from './SearchDropdown'
 
 export const Header = () => {
   const { setTheme, resolvedTheme } = useTheme()
@@ -15,87 +17,179 @@ export const Header = () => {
 
   const [showGenre, setShowGenre] = useState(false)
   const [searchActive, setSearchActive] = useState(false)
+  const [searchValue, setSearchValue] = useState('')
+  const [searchResults, setSearchResults] = useState([])
+  const searchRef = useRef(null)
+  const genreRef = useRef(null)
+  const debouncedSearch = useDebounce(searchValue, 500)
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        searchRef.current &&
+        !(searchRef.current as any).contains(event.target)
+      ) {
+        setSearchActive(false)
+      }
+
+      if (
+        genreRef.current &&
+        !(genreRef.current as any).contains(event.target)
+      ) {
+        setShowGenre(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [])
+
+  useEffect(() => {
+    const fetchSearch = async () => {
+      if (debouncedSearch.trim()) {
+        const data = await searchMovies(debouncedSearch)
+        setSearchResults(data.results.slice(0, 5))
+      } else {
+        setSearchResults([])
+      }
+    }
+
+    fetchSearch()
+  }, [debouncedSearch])
+
+  const clearSearch = () => setSearchValue('')
 
   return (
-    <div className="flex items-center mt-[11.5px] z-20 relative bg-background z-10 px-[11.5px] sm:justify-around sm:px-[80px]">
-      {!searchActive ? (
-        <>
-          <Link href={'../'}>
-            <div
-              className={`flex gap-2 justify-start ${
-                isDarkThemeActive ? 'text-white-900' : 'text-indigo-700'
-              }`}
-            >
-              <Film />
-              <p className="w-[64px]">
-                <i>
-                  <b>Movie Z</b>
-                </i>
-              </p>
-            </div>
-          </Link>
-          <div className="flex gap-2 w-full justify-end sm:justify-center">
-            <Button
-              variant={'outline'}
-              onClick={() => setShowGenre(!showGenre)}
-              className="border border-gray-400 hidden sm:flex"
-            >
-              <ChevronDown className="mr-1" />
-              Genre
-            </Button>
-            <div className="flex items-center sm:flex border rounded-[7px] h-[36px] px-2 border-gray-400 shadow-xs focus-within:outline-none focus-within:ring-0 focus-within:ring-transparent">
-              <Search
-                className="cursor-pointer"
-                onClick={() => setSearchActive(true)}
-              />
-              <Input
-                placeholder="Search.."
-                className="border-none focus:outline-none focus:ring-0 focus:ring-transparent focus-visible:ring-0 hidden sm:w-[380px] sm:flex"
-              />
-            </div>
+    <div className="flex items-center mt-3 relative bg-background z-10 px-3 sm:justify-around sm:px-20">
+      <div
+        className="hidden sm:flex gap-2 items-center sm:gap-[200px]"
+        ref={searchRef}
+      >
+        <Link href={'../'}>
+          <div
+            className={`flex gap-2 items-center ${
+              isDarkThemeActive ? 'text-white' : 'text-indigo-700'
+            }`}
+          >
+            <Film />
+            <p className="w-[64px] font-bold italic">Movie Z</p>
           </div>
-
+        </Link>
+        <div className="flex gap-2">
           <Button
             variant={'outline'}
-            size="icon"
-            onClick={toggleTheme}
-            className="border border-gray-400 ml-[12px] sm:ml-[0px]"
+            onClick={() => setShowGenre(!showGenre)}
+            className="border border-gray-400"
           >
-            {isDarkThemeActive ? <Sun /> : <Moon />}
+            <ChevronDown className="mr-1" />
+            Genre
           </Button>
-        </>
-      ) : (
-        <div className="flex justify-between items-center w-full px-2">
-          <div className="flex items-center gap-2 w-full">
+          <div className="relative flex items-center border rounded-md h-9 px-2 border-gray-400 shadow-xs outline-none">
+            <Search className="cursor-pointer text-muted-foreground" />
+            <input
+              placeholder="Search movies..."
+              value={searchValue}
+              onChange={(e) => setSearchValue(e.target.value)}
+              className="border-none focus:outline-none focus:ring-0 sm:w-[380px]"
+            />
+            {searchResults.length > 0 && (
+              <SearchDropdown
+                movies={searchResults}
+                searchValue={searchValue}
+                onSelect={() => setSearchValue('')}
+              />
+            )}
+          </div>
+        </div>
+      </div>
+
+      <Button
+        variant={'outline'}
+        size="icon"
+        onClick={toggleTheme}
+        className=" flex border border-gray-400 items-center place-items-center ml-3 hidden sm:block"
+      >
+        {isDarkThemeActive ? <Sun /> : <Moon />}
+      </Button>
+
+      <div
+        className="sm:hidden flex items-center justify-between w-full mt-2"
+        ref={searchRef}
+      >
+        {searchActive ? (
+          <div className="flex items-center gap-2 w-full px-2">
             <Button
               variant="outline"
               size="icon"
-              className="border border-gray-400"
               onClick={() => setShowGenre(!showGenre)}
+              className="border border-gray-400"
             >
               <ChevronDown />
             </Button>
-            <div className="relative w-full">
+            <div className="relative flex-grow">
               <Search className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400" />
-              <Input
+              <input
                 placeholder="Search"
+                value={searchValue}
+                onChange={(e) => setSearchValue(e.target.value)}
                 className="pl-8 pr-3 py-2 w-full border border-gray-300 rounded-md focus:outline-none focus:ring-0"
               />
+              {searchResults.length > 0 && (
+                <SearchDropdown
+                  movies={searchResults}
+                  searchValue={searchValue}
+                  onSelect={() => setSearchValue('')}
+                />
+              )}
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setSearchActive(false)}
+            >
+              <X />
+            </Button>
+          </div>
+        ) : (
+          <div className="flex items-center justify-between w-full px-2">
+            <Link href={'../'}>
+              <div className="flex gap-2 items-center text-indigo-700">
+                <Film />
+                <p className="w-[64px] font-bold italic">Movie Z</p>
+              </div>
+            </Link>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setSearchActive(true)}
+                className="border border-gray-400"
+              >
+                <Search />
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={toggleTheme}
+                className="border border-gray-400"
+              >
+                {isDarkThemeActive ? <Sun /> : <Moon />}
+              </Button>
             </div>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setSearchActive(false)}
-          >
-            <X />
-          </Button>
+        )}
+      </div>
+
+      {showGenre && (
+        <div
+          className="absolute bg-white dark:bg-zinc-900 -translate-x-0/1 translate-y-5/9 sm:translate-x-14 sm:translate-y-48 z-50 shadow-md rounded-md border"
+          ref={genreRef}
+        >
+          <Genre visible={showGenre} />
         </div>
       )}
-
-      <div className="absolute bg-white translate-x-2 translate-y-73 sm:translate-x-14 sm:translate-y-48">
-        <Genre visible={showGenre} />
-      </div>
     </div>
   )
 }

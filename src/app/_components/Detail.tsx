@@ -10,7 +10,6 @@ import {
   CardDescription,
   CardFooter,
 } from '@/components/ui/card'
-import { OverViewSkeleton } from './OverViewSkeleton'
 import { ArrowRight, Play } from 'lucide-react'
 import { PosterBackdropSkeleton } from './PosterBackdropSkeleton'
 import { getYouTubeApi } from '@/hooks/GetYouTubeApi'
@@ -188,7 +187,11 @@ export const Detail = ({ movie }: any) => {
             <SimilarMoviesSkeleton />
           ) : (
             similar.map((m: any) => (
-              <Link key={m.id} href={`./${m.id}`}>
+              <Link
+                key={m.id}
+                href={`./${m.id}`}
+                className="hover:scale-105 transition"
+              >
                 <Card className="h-[309px] w-[158px] sm:h-[439px] sm:w-[230px] overflow-hidden p-0">
                   <CardContent className="flex items-center justify-center p-0">
                     <Image
