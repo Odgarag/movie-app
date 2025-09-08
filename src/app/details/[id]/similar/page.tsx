@@ -17,7 +17,7 @@ interface Movie {
   vote_average: number
 }
 
-export default async function similar({ params }: { params: { id: string } }) {
+export default async function Similar({ params }: { params: { id: string } }) {
   const { id } = params
   const similarData = await getSimilarMoviesApi(id)
 
@@ -40,7 +40,7 @@ export default async function similar({ params }: { params: { id: string } }) {
       <div className="flex mb-[36px] mx-[20px] sm:mx-[0px] sm:[32px]">
         <p className="flex text-[30px]">More Like This</p>
       </div>
-      <div className="container mx-auto gap-[32px] justify-items-center grid grid-cols-2  sm:grid-cols-5">
+      <div className="container mx-auto gap-[32px] justify-items-center grid grid-cols-2 sm:grid-cols-5">
         {similarData.results.map((movie: Movie) => (
           <Link
             key={movie.id}
@@ -52,7 +52,6 @@ export default async function similar({ params }: { params: { id: string } }) {
                 <Image
                   src={`https://image.tmdb.org/t/p/original/${movie?.poster_path}`}
                   alt="poster"
-                  objectFit="cover"
                   width={230}
                   height={340}
                   className="w-[158px] h-[210px] sm:w-[230px] sm:h-[340px] object-cover"

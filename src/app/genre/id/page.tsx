@@ -8,13 +8,11 @@ import { getMoviesByGenre } from '@/hooks/getMoviesByGenre'
 import Image from 'next/image'
 import Link from 'next/link'
 
-interface GenrePageProps {
-  params: {
-    id: string
-  }
-}
-
-export default async function GenrePage({ params }: GenrePageProps) {
+export default async function GenrePage({
+  params,
+}: {
+  params: { id: string }
+}) {
   const genreId = parseInt(params.id)
   const movies = await getMoviesByGenre(genreId)
 
@@ -24,19 +22,15 @@ export default async function GenrePage({ params }: GenrePageProps) {
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
         {movies.map((movie: any) => (
           <Link
-            href={`./details/${movie.id}`}
+            href={`/details/${movie.id}`}
             key={movie.id}
             className="hover:scale-105 transition"
           >
-            <Card
-              key={movie.id}
-              className="h-[309px] w-[158px] sm:h-[439px] sm:w-[230px] overflow-hidden p-0"
-            >
+            <Card className="h-[309px] w-[158px] sm:h-[439px] sm:w-[230px] overflow-hidden p-0">
               <CardContent className="flex items-center justify-center p-0">
                 <Image
                   src={`https://image.tmdb.org/t/p/original/${movie?.poster_path}`}
                   alt="poster"
-                  objectFit="cover"
                   width={230}
                   height={340}
                   className="w-[158px] h-[210px] sm:w-[230px] sm:h-[340px] object-cover"
