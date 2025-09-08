@@ -51,8 +51,8 @@ export const Popular = () => {
       </div>
       <div className="container mx-auto gap-[32px] justify-items-center grid grid-cols-2  sm:grid-cols-5">
         {popular.map((el, index) => (
-          <MovieCard el={el} index={index} />
-        ))}{' '}
+          <MovieCard key={el.id || index} el={el} index={index} />
+        ))}
       </div>
     </div>
   )
